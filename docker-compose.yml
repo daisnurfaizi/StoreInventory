@@ -1,0 +1,47 @@
+version: "3.9"
+
+networks:
+  inventory:
+
+services:
+
+  nginx-inventory:
+    image: nginx:1.19.6-alpine
+    container_name: nginx-inventory
+    restart: always
+    ports:
+      - 8888:80
+    volumes:
+      - ./:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    volumes_from:
+      - php-inventory
+    depends_on:
+      - php-inventory
+      # - mysql
+    networks:
+      - inventory
+    extra_hosts:
+        - "dockerhost:192.168.0.127"
+
+  php-inventory:
+    platform: linux/arm64
+    image: php:8.1-fpm
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: php-inventory
+    restart: always
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - inventory
+
+
+  database:
+    image: library/mysql
+    # platform: linux/amd64
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3338:3306"
